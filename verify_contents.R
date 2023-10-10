@@ -68,15 +68,23 @@ df <- rbind(df, list(2022, 16, "Relevés_Pétoncle_Minganie_juin2022_ASS"))
 df <- rbind(df, list(2022, 18, "Relevé36_Pétoncle_IdM_2022_oct_ASS"))
 
 
-t_name <- "PROJET_MOLLUSQUE"
 
-
-# compare table between src_data and master
-for(i in 1:nrow(df)) {
-  master  <- filter_table("maitre.mdb",t_name , df[i,1], df[i,2])
-  src_data  <- filter_table(df[i,3], t_name, df[i,1], df[i,2])
-  (master == src_data).any()
+for (t_name in data_tables){
+  # compare table between src_data and master
+  for(i in 1:nrow(df)) {
+    print(sprintf("Checking %s:%s ...", source_file, t_name))
+    source_file <- df[i,3]
+    year <- df[i,1]
+    cod_serie_hist <- df[i,2]
+    master  <- filter_table("maitre.mdb",t_name ,year , cod_serie_hist)
+    src_data  <- filter_table(source_file, t_name, year, cod_serie_hist)
+    if (! all.equal(master,src_data)) {
+      error_msg = sprintf("Problem at table:%s:%s", source_file, t_name)
+      print(error_msg)
+      exit()
+    }
+    print("OK!")
   
+  }
 }
-
 

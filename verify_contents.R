@@ -26,10 +26,6 @@ filter_table <-function(src_fname, t_name, annee, cod_serie_hist) {
 }
 
 
-
-a <-filter_table("S:/Petoncle/Recherche/Mission/BaseDonnées/maitre.mdb", "PROJET_MOLLUSQUE", 2009, 18)
-
-
 # The tables that actually contain survey data
 data_tables <- c('PROJET_MOLLUSQUE', 
                  'TRAIT_MOLLUSQUE', 
@@ -37,10 +33,10 @@ data_tables <- c('PROJET_MOLLUSQUE',
                  'CAPTURE_MOLLUSQUE', 
                  'FREQ_LONG_MOLLUSQUE', 
                  'SUBSTRAT_MOLLUSQUE',
-#                 'BIOMETRIE_MOLLUSQUE',
+#                 'BIOMETRIE_MOLLUSQUE', # no need to compare this one!
                  )
 
-
+# create a dataframe that contains the pertinent scope for the (year+cod_serie_hist) for the survey
 df = data.frame(matrix(nrow = 0, ncol = 3))
 colnames(df) = c('annee', 'cod_serie_hist', 'src_file')
 df <- rbind(df, list(2009, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
@@ -68,9 +64,13 @@ df <- rbind(df, list(2022, 16, "Relevés_Pétoncle_Minganie_juin2022_ASS"))
 df <- rbind(df, list(2022, 18, "Relevé36_Pétoncle_IdM_2022_oct_ASS"))
 
 
+####
+# The loop that does the work
+####
 
+# iterate over data tables
 for (t_name in data_tables){
-  # compare table between src_data and master
+  # iterate over data sources
   for(i in 1:nrow(df)) {
     print(sprintf("Checking %s:%s ...", source_file, t_name))
     source_file <- df[i,3]

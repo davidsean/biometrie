@@ -66,7 +66,6 @@ data_tables <- c('PROJET_MOLLUSQUE',
 
 # create a dataframe that contains the pertinent scope for the (year+cod_serie_hist) for the survey
 df = data.frame(matrix(nrow = 0, ncol = 3))
-colnames(df) = c('no_releve', 'cod_source_info', 'src_file')
 df <- rbind(df, list(2, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(3, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(4, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
@@ -90,7 +89,7 @@ df <- rbind(df, list(35, 19, "Relevé35_Pétoncle_IdM_AS_17-11-2021.mdb"))
 df <- rbind(df, list(30, 18, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
 df <- rbind(df, list(31, 18, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
 df <- rbind(df, list(36, 19, "Relevé36_Pétoncle_IdM_2022_oct_ASS.mdb"))
-
+colnames(df) = c('no_releve', 'cod_source_info', 'src_file')
 
 ####
 # The loop that does the work

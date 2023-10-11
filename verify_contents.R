@@ -10,36 +10,34 @@ require(data.table, quietly = T)
 
 
 # read filtered table data
-filter_table <-function(src_fname, t_name, annee, cod_serie_hist, error_at_empty=T) {
+filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_empty=T) {
   #' Read table t_name and filter data by year and cod_serie_hist
   #'
   #' src_fname: filename of MSAccess file
   #' t_name: table name containing data
-  #' annee: value for year filter
-  #' cod_serie_hist: value for cod_serie_hist filter
+  #' no_releve: value for survey number filter
+  #' cod_source_info: value for cod_source_info filter
   #' error_at_empty: will cause an error if the results are empty
   #'
-  #' The table name t_name(string), is filtered by annee (int) and cod_serie_hist (int)
-  #' The cod_serie_hist parameter needs to be one of the three: 
-  #' 15 -> Indice d’abondance zone 16E - pétoncle 
-  #' 16 -> Indice d’abondance zone 16F - pétoncle 
-  #' 18 -> Indice d’abondance zone 20 - pétoncle
+  #' The cod_source_info parameter needs to be one of the two: 
+  #' 18 -> Évaluation de stocks IML - Pétoncle Minganie
+  #' 19 -> Évaluation de stocks IML - Pétoncle I de M
   #' 
   #'
 
   #parameter validation
-  allowed_vals <- c(15, 16, 18)
-  if (! cod_serie_hist %in% allowed_vals ) {
-    stop("invalid value for cod_serie_hist")
+  allowed_vals <- c(18, 19)
+  if (! cod_source_info %in% allowed_vals ) {
+    stop("invalid value for cod_source_info")
   }
   
   require(RODBC, quietly = T, warn.conflicts = T)
   full_path <- paste("S:/Petoncle/Recherche/Mission/BaseDonnées/", src_fname, sep="")
   db <- RODBC::odbcDriverConnect(paste("Driver=Microsoft Access Driver (*.mdb, *.accdb); DBQ=", full_path, sep=""))
-  query <- sprintf('SELECT * FROM %s WHERE ANNEE=%d AND COD_SERIE_HIST=%d', t_name, annee, cod_serie_hist)
+  query <- sprintf('SELECT * FROM %s WHERE NO_RELEVE=%d AND COD_SOURCE_INFO=%d', t_name, no_releve, cod_source_info)
   
   x <- RODBC::sqlQuery(db, query)
-  
+
   RODBC::odbcClose(db)
   if (error_at_empty && nrow(x)==0){
     stop("empty table")
@@ -49,8 +47,12 @@ filter_table <-function(src_fname, t_name, annee, cod_serie_hist, error_at_empty
 }
 
 
+master  <- filter_table("maitre.mdb", "TRAIT_MOLLUSQUE", 2 , 19)
+src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "TRAIT_MOLLUSQUE", 2, 19)
+
+
 # The tables that actually contain survey data
-data_tables <- c('PROJET_MOLLUSQUE', 
+data_tables <- c(#'PROJET_MOLLUSQUE', 
                  'TRAIT_MOLLUSQUE', 
                  'ENGIN_MOLLUSQUE',
                  'CAPTURE_MOLLUSQUE', 
@@ -61,30 +63,30 @@ data_tables <- c('PROJET_MOLLUSQUE',
 
 # create a dataframe that contains the pertinent scope for the (year+cod_serie_hist) for the survey
 df = data.frame(matrix(nrow = 0, ncol = 3))
-colnames(df) = c('annee', 'cod_serie_hist', 'src_file')
-df <- rbind(df, list(2009, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2010, 15, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2010, 16, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2011, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2012, 15, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2012, 16, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2013, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2014, 15, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2014, 16, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2015, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2016, 15, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2016, 16, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2016, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2017, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2018, 15, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2018, 16, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(2019, 15, "Relevés_Pétoncle_Globale_juin2019_BD.mdb"))
-df <- rbind(df, list(2019, 16, "Relevés_Pétoncle_Globale_juin2019_BD.mdb"))
-df <- rbind(df, list(2019, 18, "Relevé35_Pétoncle_IdM_2019-10-04_BD_DS.mdb"))
-df <- rbind(df, list(2021, 18, "Relevé35_Pétoncle_IdM_AS_17-11-2021.mdb"))
-df <- rbind(df, list(2022, 15, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
-df <- rbind(df, list(2022, 16, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
-df <- rbind(df, list(2022, 18, "Relevé36_Pétoncle_IdM_2022_oct_ASS.mdb"))
+colnames(df) = c('no_releve', 'cod_source_info', 'src_file')
+df <- rbind(df, list(2, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(3, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(4, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(5, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(6, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(7, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(8, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(9, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(10, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(11, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(12, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(13, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(14, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(15, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(16, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(17, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
+df <- rbind(df, list(28, 18, "Relevés_Pétoncle_Globale_juin2019_BD.mdb"))
+df <- rbind(df, list(29, 18, "Relevés_Pétoncle_Globale_juin2019_BD.mdb"))
+df <- rbind(df, list(34, 19, "Relevé35_Pétoncle_IdM_2019-10-04_BD_DS.mdb"))
+df <- rbind(df, list(35, 19, "Relevé35_Pétoncle_IdM_AS_17-11-2021.mdb"))
+df <- rbind(df, list(30, 18, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
+df <- rbind(df, list(31, 18, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
+df <- rbind(df, list(36, 19, "Relevé36_Pétoncle_IdM_2022_oct_ASS.mdb"))
 
 
 ####
@@ -100,7 +102,7 @@ for (t_name in data_tables){
     cod_serie_hist <- df[i,2]
     
     print(sprintf("Checking %s:%s ...", source_file, t_name))
-    master  <- filter_table("maitre.mdb", t_name , year ,cod_serie_hist)
+    master  <- filter_table("maitre.mdb", t_name, year, cod_serie_hist)
     src_data  <- filter_table(source_file, t_name, year, cod_serie_hist)
     if (! all.equal(master,src_data)) {
       error_msg = sprintf("Problem at table:%s:%s", source_file, t_name)

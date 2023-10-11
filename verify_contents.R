@@ -10,7 +10,7 @@ require(data.table, quietly = T)
 
 
 # read filtered table data
-filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_empty=T) {
+filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_empty=F) {
   #' Read table t_name and filter data by year and cod_serie_hist
   #'
   #' src_fname: filename of MSAccess file
@@ -39,20 +39,23 @@ filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_
   x <- RODBC::sqlQuery(db, query)
 
   RODBC::odbcClose(db)
-  if (error_at_empty && nrow(x)==0){
-    stop("empty table")
+  if ( nrow(x)==0){
+    print(sprintf("Empty %s:%s:%d:%d ...", source_file, t_name, no_releve, cod_source_info))
+    if (error_at_empty){
+      stop("empty table")
+    }
   }
   
   return(x)
 }
 
-
-master  <- filter_table("maitre.mdb", "TRAIT_MOLLUSQUE", 2 , 19)
-src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "TRAIT_MOLLUSQUE", 2, 19)
+# test the function...
+#master  <- filter_table("maitre.mdb", "TRAIT_MOLLUSQUE", 2 , 19)
+#src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "TRAIT_MOLLUSQUE", 2, 19)
 
 
 # The tables that actually contain survey data
-data_tables <- c(#'PROJET_MOLLUSQUE', 
+data_tables <- c('PROJET_MOLLUSQUE', 
                  'TRAIT_MOLLUSQUE', 
                  'ENGIN_MOLLUSQUE',
                  'CAPTURE_MOLLUSQUE', 
@@ -98,12 +101,25 @@ for (t_name in data_tables){
   # iterate over data sources
   for(i in 1:nrow(df)) {
     source_file <- df[i,3]
-    year <- df[i,1]
-    cod_serie_hist <- df[i,2]
+    no_releve <- df[i,1]
+    cod_source_info <- df[i,2]
     
-    print(sprintf("Checking %s:%s ...", source_file, t_name))
-    master  <- filter_table("maitre.mdb", t_name, year, cod_serie_hist)
-    src_data  <- filter_table(source_file, t_name, year, cod_serie_hist)
+    #print(sprintf("Checking %s:%s:%d:%d ...", source_file, t_name, no_releve, cod_source_info))
+    src_data  <- filter_table(source_file, t_name, no_releve, cod_source_info)
+  }
+}
+    
+# iterate over data tables
+for (t_name in data_tables){
+  # iterate over data sources
+  for(i in 1:nrow(df)) {
+    source_file <- df[i,3]
+    no_releve <- df[i,1]
+    cod_source_info <- df[i,2]
+    
+    #print(sprintf("Checking %s:%s:%d:%d ...", source_file, t_name, no_releve, cod_source_info))
+    master  <- filter_table("maitre.mdb", t_name, no_releve, cod_source_info)
+    src_data  <- filter_table(source_file, t_name, no_releve, cod_source_info)
     if (! all.equal(master,src_data)) {
       error_msg = sprintf("Problem at table:%s:%s", source_file, t_name)
       print(error_msg)

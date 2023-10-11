@@ -135,7 +135,6 @@ for (t_name in data_tables){
       error_msg = sprintf("Problem at table:%s:%s", source_file, t_name)
       print(error_msg)
       err <- c(err,error_msg)
-      print("Tables not identical")
     } else {
       print("OK!")
     }

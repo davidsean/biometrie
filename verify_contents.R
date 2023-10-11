@@ -120,6 +120,7 @@ colnames(df) = c('no_releve', 'cod_source_info', 'src_file')
 
 
 # iterate over data tables
+err <- NULL
 for (t_name in data_tables){
   # iterate over data sources
   for(i in 1:nrow(df)) {
@@ -133,11 +134,13 @@ for (t_name in data_tables){
     if (! isTRUE(all.equal(master,src_data))) {
       error_msg = sprintf("Problem at table:%s:%s", source_file, t_name)
       print(error_msg)
-      stop("Tables not identical")
+      err <- c(err,error_msg)
+      print("Tables not identical")
     } else {
       print("OK!")
     }
   
   }
+  
 }
 

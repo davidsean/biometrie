@@ -10,7 +10,7 @@ require(data.table, quietly = T)
 
 
 # read filtered table data
-filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_empty=F) {
+filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_empty=T) {
   #' Read table t_name and filter data by year and cod_serie_hist
   #'
   #' src_fname: filename of MSAccess file
@@ -64,7 +64,7 @@ filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_
 
 # test the function...
 #master  <- filter_table("maitre.mdb", "TRAIT_MOLLUSQUE", 16, 18)
-src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "SUBSTRAT_MOLLUSQUE", 16, 18)
+#src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "SUBSTRAT_MOLLUSQUE", 16, 18)
 
 
 #require(RODBC, quietly = T, warn.conflicts = T)
@@ -112,6 +112,7 @@ df <- rbind(df, list(30, 18, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
 df <- rbind(df, list(31, 18, "Relevés_Pétoncle_Minganie_juin2022_ASS.mdb"))
 df <- rbind(df, list(36, 19, "Relevé36_Pétoncle_IdM_2022_oct_ASS.mdb"))
 colnames(df) = c('no_releve', 'cod_source_info', 'src_file')
+
 
 ####
 # The loop that does the work

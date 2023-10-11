@@ -34,7 +34,20 @@ filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_
   require(RODBC, quietly = T, warn.conflicts = T)
   full_path <- paste("S:/Petoncle/Recherche/Mission/BaseDonnées/", src_fname, sep="")
   db <- RODBC::odbcDriverConnect(paste("Driver=Microsoft Access Driver (*.mdb, *.accdb); DBQ=", full_path, sep=""))
-  query <- sprintf('SELECT * FROM %s WHERE NO_RELEVE=%d AND COD_SOURCE_INFO=%d', t_name, no_releve, cod_source_info)
+
+  if (t_name == "PROJET_MOLLUSQUE") {
+    sort_statement <- ""
+  } else if (t_name == "CAPTURE_MOLLUSQUE"){
+    sort_statement <- "ORDER BY IDENT_NO_TRAIT, COD_ESP_GEN ASC"
+  } else if (t_name == "FREQ_LONG_MOLLUSQUE"){
+    sort_statement <- "ORDER BY IDENT_NO_TRAIT, COD_ESP_GEN, NO_MOLLUSQUE ASC"
+  } else if (t_name == "SUBSTRAT_MOLLUSQUE"){
+    sort_statement <- "ORDER BY IDENT_NO_TRAIT, COD_TYP_SUBSTRAT ASC"
+  } else {
+    sort_statement <- "ORDER BY IDENT_NO_TRAIT ASC"
+  }
+  
+  query <- sprintf('SELECT * FROM %s WHERE NO_RELEVE=%d AND COD_SOURCE_INFO=%d %s', t_name, no_releve, cod_source_info, sort_statement)
   
   x <- RODBC::sqlQuery(db, query)
 
@@ -50,8 +63,18 @@ filter_table <-function(src_fname, t_name, no_releve, cod_source_info, error_at_
 }
 
 # test the function...
-#master  <- filter_table("maitre.mdb", "TRAIT_MOLLUSQUE", 2 , 19)
-#src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "TRAIT_MOLLUSQUE", 2, 19)
+#master  <- filter_table("maitre.mdb", "TRAIT_MOLLUSQUE", 16, 18)
+src_data  <- filter_table("Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", "SUBSTRAT_MOLLUSQUE", 16, 18)
+
+
+#require(RODBC, quietly = T, warn.conflicts = T)
+#full_path <- paste("S:/Petoncle/Recherche/Mission/BaseDonnées/", "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb", sep="")
+#db <- RODBC::odbcDriverConnect(paste("Driver=Microsoft Access Driver (*.mdb, *.accdb); DBQ=", full_path, sep=""))
+#sort_statement <- "ORDER BY IDENT_NO_TRAIT, COD_TYP_SUBSTRAT ASC"
+#query <- sprintf('SELECT * FROM %s WHERE NO_RELEVE=%d AND COD_SOURCE_INFO=%d %s', "SUBSTRAT_MOLLUSQUE", 16, 18, sort_statement)
+#x <- RODBC::sqlQuery(db, query)
+#RODBC::odbcClose(db)
+
 
 
 # The tables that actually contain survey data
@@ -78,7 +101,6 @@ df <- rbind(df, list(10, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.md
 df <- rbind(df, list(11, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(12, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(13, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
-df <- rbind(df, list(14, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(15, 19, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(16, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
 df <- rbind(df, list(17, 18, "Relevés_Pétoncle_Globale_juin2019_PG_Corrigee.mdb"))
@@ -95,6 +117,7 @@ colnames(df) = c('no_releve', 'cod_source_info', 'src_file')
 # The loop that does the work
 ####
 
+
 # iterate over data tables
 for (t_name in data_tables){
   # iterate over data sources
@@ -103,26 +126,13 @@ for (t_name in data_tables){
     no_releve <- df[i,1]
     cod_source_info <- df[i,2]
     
-    #print(sprintf("Checking %s:%s:%d:%d ...", source_file, t_name, no_releve, cod_source_info))
-    src_data  <- filter_table(source_file, t_name, no_releve, cod_source_info)
-  }
-}
-    
-# iterate over data tables
-for (t_name in data_tables){
-  # iterate over data sources
-  for(i in 1:nrow(df)) {
-    source_file <- df[i,3]
-    no_releve <- df[i,1]
-    cod_source_info <- df[i,2]
-    
-    #print(sprintf("Checking %s:%s:%d:%d ...", source_file, t_name, no_releve, cod_source_info))
+    print(sprintf("Checking %s:%s:%d:%d ...", source_file, t_name, no_releve, cod_source_info))
     master  <- filter_table("maitre.mdb", t_name, no_releve, cod_source_info)
     src_data  <- filter_table(source_file, t_name, no_releve, cod_source_info)
-    if (! all.equal(master,src_data)) {
+    if (! isTRUE(all.equal(master,src_data))) {
       error_msg = sprintf("Problem at table:%s:%s", source_file, t_name)
       print(error_msg)
-      exit()
+      stop("Tables not identical")
     } else {
       print("OK!")
     }
